@@ -60,15 +60,17 @@ class Detector(object):
 
 # here!		# processing
 		processed = cv.threshold(img_hsv, 127, 255, cv.THRESH_BINARY)
+		processed = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
 
 #		img_out = cv.cvtColor(processed, cv.COLOR_GRAY2BGR)
 
 
+		# final image
+		final_img = self.bridge.cv2_to_imgmsg(img_bgr, "bgr8")	#BGR8
+
 		# - - - - - - - - - - - - - - - - - - - - - - -
 		# publish
-
-		final_img = self.bridge.cv2_to_imgmsg(processed, "bgr8")
-
+		
 		self.publisher.publish(final_img)
 
 #		self.publisher.publish(self.bridge.cv2_to_imgmsg(processed, "bgr8"))

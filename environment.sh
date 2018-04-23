@@ -16,7 +16,7 @@ export DUCKIETOWN_ROOT=$HOME/duckietown
 echo
 
 echo "Setup ROS_MASTER"
-export ROS_MASTER_URI=http://duckiebot.local:11311/
+#export ROS_MASTER_URI=http://duckiebot.local:11311/
 
 echo "Building machines file..."
 make -C  $DUCKIETOWN_ROOT

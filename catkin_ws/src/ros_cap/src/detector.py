@@ -59,8 +59,8 @@ class Detector(object):
 		mask = cv.inRange(img_hsv, lower_yellow, upper_yellow)
 
 # here!		# processing
-		processed = cv.threshold(img_hsv, 127, 255, cv.THRESH_BINARY)
-		processed = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
+		processed = cv.threshold(mask, 127, 255, cv.THRESH_BINARY)
+#		processed = cv.cvtColor(processed, cv.COLOR_HSV2BGR)
 
 #		img_out = cv.cvtColor(processed, cv.COLOR_GRAY2BGR)
 

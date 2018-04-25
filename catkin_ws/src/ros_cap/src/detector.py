@@ -16,9 +16,11 @@ import numpy as np
 
 
 # - - - - - - - - - - - - - - - - - - - - - - -
-# yellow colors
+# yellow color limit values en HSV
 
-lower_yellow = np.array([40, 50, 50])
+#lower_yellow = np.array([40, 50, 50])		# original
+lower_yellow = np.array([50, 150, 150])
+#lower_yellow = np.array([100, 255, 255])	# original
 upper_yellow = np.array([100, 255, 255])
 
 
@@ -34,8 +36,6 @@ class Detector(object):
 		self.publisher = rospy.Publisher("detector_imagenfiltrada", Image, queue_size=10)
 		self.cv_image = Image()
 		self.bridge = CvBridge()
-
-	#def publicar(self):		<-- idk what da hell is dis
 
 
 	def callback(self, msg):
@@ -57,16 +57,22 @@ class Detector(object):
 
 		# filter
 		mask = cv.inRange(img_hsv, lower_yellow, upper_yellow)
+		
+		kernel = np.ones((5,5),np.uint8)			# Matriz de 1's 5x5
+		
+		mask = cv.erode(mask, kernel, iterations = 4)
+		mask = cv.dilate(mask, kernel, iterations = 16)
 
-# here!		# processing
-		processed = cv.threshold(mask, 127, 255, cv.THRESH_BINARY)
-#		processed = cv.cvtColor(processed, cv.COLOR_HSV2BGR)
+# here!		# processing AND
+		img_out = cv.bitwise_and(img_hsv, img_hsv, mask)
+		img_out = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
 
-#		img_out = cv.cvtColor(processed, cv.COLOR_GRAY2BGR)
+		# blob
+#		contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+#		x, y, w, h = cv.boundingRect(cnt)
 
-
-		# final image
-		final_img = self.bridge.cv2_to_imgmsg(img_bgr, "bgr8")	#BGR8
+		# final image as msg
+		final_img = self.bridge.cv2_to_imgmsg(img_out, "bgr8")
 
 		# - - - - - - - - - - - - - - - - - - - - - - -
 		# publish
@@ -74,6 +80,28 @@ class Detector(object):
 		self.publisher.publish(final_img)
 
 #		self.publisher.publish(self.bridge.cv2_to_imgmsg(processed, "bgr8"))
+
+'''
+BITACORA -
+
+> Logre finalmente que se viera algo!!
+Aunque sigue fallando.
+
+No se si es mejor usar
+img_out = cv.bitwise_and(img_bgr, img_bgr, mask)
+o
+img_out = cv.bitwise_and(img_hsv, img_hsv, mask)
+img_out = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
+(el actual).
+
+Creo que la mascara no esta considerando los limites de color, he
+probado con valores muy extremos y sigue mostrando lo mismo...
+Whatever, es demasiado tarde para seguir intentando y/o ver donde
+esta el problema.
+
+-Syrass
+
+'''
 
 
 # - - - - - - - - - - - - - - - - - - - - - - -

@@ -19,8 +19,8 @@ import numpy as np
 # yellow color limit values en HSV
 
 #lower_yellow = np.array([40, 50, 50])		# original
-lower_yellow = np.array([50, 150, 150])
-#lower_yellow = np.array([100, 255, 255])	# original
+lower_yellow = np.array([25, 98, 195])
+#upper_yellow = np.array([100, 255, 255])	# original
 upper_yellow = np.array([100, 255, 255])
 
 
@@ -39,7 +39,7 @@ class Detector(object):
 
 
 	def callback(self, msg):
-		
+	
 		# exception
 		try:
 	 	       self.cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -60,16 +60,17 @@ class Detector(object):
 		
 		kernel = np.ones((5,5),np.uint8)			# Matriz de 1's 5x5
 		
-		mask = cv.erode(mask, kernel, iterations = 4)
-		mask = cv.dilate(mask, kernel, iterations = 16)
-
 # here!		# processing AND
-		img_out = cv.bitwise_and(img_hsv, img_hsv, mask)
-		img_out = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
+		img_out = cv.bitwise_and(img_hsv, img_hsv, mask = mask)
+		img_out = cv.cvtColor(img_out, cv.COLOR_HSV2BGR)
 
-		# blob
-#		contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-#		x, y, w, h = cv.boundingRect(cnt)
+		# eroding - dilating
+		mask = cv.erode(mask, kernel, iterations = 4)
+		mask = cv.dilate(mask, kernel, iterations = 12)
+
+		# blob contour
+		contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		x, y, w, h = cv.boundingRect(cnt)
 
 		# final image as msg
 		final_img = self.bridge.cv2_to_imgmsg(img_out, "bgr8")
@@ -79,7 +80,9 @@ class Detector(object):
 		
 		self.publisher.publish(final_img)
 
-#		self.publisher.publish(self.bridge.cv2_to_imgmsg(processed, "bgr8"))
+
+
+
 
 '''
 BITACORA -

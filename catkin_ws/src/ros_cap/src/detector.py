@@ -4,19 +4,14 @@
 
 import rospy
 import cv2 as cv
-from std_msgs.msg import String, Int32
-
-#from geometry_msgs.msg import Twist
-
-from sensor_msgs.msg import Image
-
-from cv_bridge import CvBridge, CvBridgeError
-
 import numpy as np
+from sensor_msgs.msg import Image
+from std_msgs.msg import String, Int32
+from cv_bridge import CvBridge, CvBridgeError
 
 
 # - - - - - - - - - - - - - - - - - - - - - - -
-# yellow color limit values en HSV
+# yellow color limit values in HSV
 
 #lower_yellow = np.array([40, 50, 50])		# original
 lower_yellow = np.array([25, 98, 195])
@@ -39,7 +34,6 @@ class Detector(object):
 
 
 	def callback(self, msg):
-	
 		# exception
 		try:
 	 	       self.cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -48,7 +42,7 @@ class Detector(object):
 
 		# - - - - - - - - - - - - - - - - - - - - - - -
 		# drama	shit
-		
+
 		# renaming received image
 		img_bgr = self.cv_image
 
@@ -57,54 +51,38 @@ class Detector(object):
 
 		# filter
 		mask = cv.inRange(img_hsv, lower_yellow, upper_yellow)
-		
+
 		kernel = np.ones((5,5),np.uint8)			# Matriz de 1's 5x5
-		
+
 # here!		# processing AND
 		img_out = cv.bitwise_and(img_hsv, img_hsv, mask = mask)
 		img_out = cv.cvtColor(img_out, cv.COLOR_HSV2BGR)
 
 		# eroding - dilating
-		mask = cv.erode(mask, kernel, iterations = 4)
+		mask = cv.erode(mask, kernel, iterations = 2)
 		mask = cv.dilate(mask, kernel, iterations = 12)
 
 		# blob contour
-		contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-		x, y, w, h = cv.boundingRect(cnt)
+		image, contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		rectanglelist = [cv.contourArea(c) for c in contours]
+		rectangles = len(rectanglelist)
+
+		print 'rectangles: ' + str(rectangles)
+
+		if rectangles > 0:
+			for c in contours:
+				x,y,w,h = cv.boundingRect(c)
+
+				cv.rectangle(img_bgr, (x,y), (x+w, y+h), (0,255,0), 2)
 
 		# final image as msg
-		final_img = self.bridge.cv2_to_imgmsg(img_out, "bgr8")
+		final_img = self.bridge.cv2_to_imgmsg(img_bgr, "bgr8")
+		##final_img = self.bridge.cv2_to_imgmsg(img_out, "bgr8")				# ESTO ES PARA VER LA MASCARA-
 
 		# - - - - - - - - - - - - - - - - - - - - - - -
 		# publish
-		
+
 		self.publisher.publish(final_img)
-
-
-
-
-
-'''
-BITACORA -
-
-> Logre finalmente que se viera algo!!
-Aunque sigue fallando.
-
-No se si es mejor usar
-img_out = cv.bitwise_and(img_bgr, img_bgr, mask)
-o
-img_out = cv.bitwise_and(img_hsv, img_hsv, mask)
-img_out = cv.cvtColor(img_bgr, cv.COLOR_HSV2BGR)
-(el actual).
-
-Creo que la mascara no esta considerando los limites de color, he
-probado con valores muy extremos y sigue mostrando lo mismo...
-Whatever, es demasiado tarde para seguir intentando y/o ver donde
-esta el problema.
-
--Syrass
-
-'''
 
 
 # - - - - - - - - - - - - - - - - - - - - - - -
